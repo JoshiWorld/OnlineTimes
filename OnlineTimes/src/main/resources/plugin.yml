@@ -1,0 +1,10 @@
+name: OnlineTimes
+version: 1.0
+author: JoshiWorld
+main: de.joshiworld.main.OT
+
+commands:
+    onlinetimes:
+        description: Onlinetimes
+        usage: </onlinetimes>
+        aliases: [ot]
