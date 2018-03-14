@@ -1,6 +1,7 @@
 package de.joshiworld.listener;
 
 import de.joshiworld.main.OT;
+import de.joshiworld.mysql.GetTime;
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
@@ -26,7 +27,15 @@ public class PlayerQuitListener implements Listener {
         File file = new File("plugins/OnlineTimes/" + p.getName());
         FileConfiguration cfg = YamlConfiguration.loadConfiguration(file);
         
-        cfg.set("Time", Long.valueOf(OT.timer.get(p.getName())));
+        int a = OT.timer.get(p.getName());
+        int b = cfg.getInt("Time");
+        int c = a + b;
+        
+        int d = GetTime.getTime(p.getName());
+        int f = a + d;
+        
+        cfg.set("Time", c);
+        GetTime.setTime(p.getName(), f);
         
         try {
             cfg.save(file);
@@ -34,7 +43,9 @@ public class PlayerQuitListener implements Listener {
             ex.printStackTrace();
         }
         
-        if(Bukkit.getOnlinePlayers().size() < 1) {
+        OT.timer.put(p.getName(), 0);
+        
+        if(Bukkit.getOnlinePlayers().size() <= 1) {
             Bukkit.getScheduler().cancelTask(PlayerJoinListener.sched);
         }
     }

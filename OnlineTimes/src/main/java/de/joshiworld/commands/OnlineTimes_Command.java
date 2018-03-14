@@ -1,20 +1,17 @@
 package de.joshiworld.commands;
 
 import de.joshiworld.main.OT;
+import de.joshiworld.mysql.GetTime;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 /**
  *
@@ -34,42 +31,77 @@ public class OnlineTimes_Command implements CommandExecutor {
             
             if(cmd.getName().equalsIgnoreCase("onlinetimes")) {
                 if(args.length == 0) {
-                    p.sendMessage(OT.Prefix + " §a/onlinetimes §8» §7Onlinetimes Befehle");
+                    if(!p.hasPermission("onlinetimes.help")) {
+                        p.sendMessage(OT.Prefix + " §aInsgesamte Spielzeit§7: " + time(GetTime.getTime(p.getName())));
+                        p.sendMessage(OT.Prefix + " §aAktuelle Spielzeit§7: " + time(OT.timer.get(p.getName())));
+                    } else {
+                        p.sendMessage(OT.Prefix + " §a/onlinetimes §8» §7Onlinetimes Befehle");
                     p.sendMessage(OT.Prefix + " §a/onlinetimes list §8» §7Listet alle Spieler auf");
                     p.sendMessage(OT.Prefix + " §a/onlinetimes reset §8» §7Resetet alle Onlinezeiten");
+                    p.sendMessage(OT.Prefix + " §a/onlinetimes reload §8» §7Reloadet alle Onlinezeiten");
+                    }
                     return true;
                 } else if(args.length == 1) {
-                    if(args[0].equalsIgnoreCase("list")) {
+                    if(!p.hasPermission("onlinetimes.*")) {
+                        return false;
+                    } else {
+                        if(args[0].equalsIgnoreCase("list")) {
                         File ordner = new File("plugins/OnlineTimes/");
                         
                         String[] file = ordner.list();
                         
-                        for(i = 0; i < file.length; i++) {
-                            File ff = new File("plugins/OnlineTimes/" + file[i]);
-                            FileConfiguration cfg = YamlConfiguration.loadConfiguration(ff);
-                            String jtjt = file[i].substring(4);
-                            times = times + jtjt + "§7: §a" + time(cfg.getLong("Time")) + "\n";
+                        if(file.length > 0) {
+                            for(i = 0; i < file.length; i++) {
+                            String jtjt = OT.Prefix + " " + file[i];
+                            times = times + jtjt + "§7: §a" + time(GetTime.getTime(file[i])) + "\n";
                         }
                         
-                        p.sendMessage(OT.Prefix + " " + times);
+                        p.sendMessage(times);
                         
                         times = "";
                         i = 0;
+                        } else {
+                            p.sendMessage(OT.Prefix + " §cEs wurden bis jetzt keine Daten aufgezeichnet");
+                        }
                     } else if(args[0].equalsIgnoreCase("reset")) {
                         File ordner = new File("plugins/OnlineTimes/");
                         
                         String[] file = ordner.list();
                         
-                        for(int t = 0; t < file.length; t++) {
-                            File ff = new File("plugins/OnlineTimes/" + file[i]);
+                        for(int m = 0; m < file.length; m++) {
+                            File ff = new File("plugins/OnlineTimes/" + file[m]);
                             ff.delete();
+                            GetTime.deletePlayer(file[m]);
                         }
                         
                         p.sendMessage(OT.Prefix + " §aDu hast die Online-Zeiten resetet");
+                    } else if(args[0].equalsIgnoreCase("reload") || args[0].equalsIgnoreCase("rl")) {
+                        File file = new File("plugins/OnlineTimes/" + p.getName());
+                        FileConfiguration cfg = YamlConfiguration.loadConfiguration(file);
+                        
+                        for(Player ppp : Bukkit.getOnlinePlayers()) {
+                            int a = OT.timer.get(p.getName());
+                            int b = cfg.getInt("Time");
+                            int c = a + b;
+                            
+                            int d = GetTime.getTime(p.getName());
+                            int f = a + d;
+        
+                            cfg.set("Time", c);
+                            GetTime.setTime(p.getName(), f);
+                        }
+        
+                    try {
+                        cfg.save(file);
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
+                    p.sendMessage(OT.Prefix + " §aDu hast die Liste reloadet");
                     } else {
                         p.sendMessage(OT.Prefix + " §cFalscher Syntax!");
                     }
                     return true;
+                    }
                 } else {
                     p.sendMessage(OT.Prefix + " §cFalscher Syntax!");
                     return true;

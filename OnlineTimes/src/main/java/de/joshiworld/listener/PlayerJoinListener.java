@@ -1,10 +1,9 @@
 package de.joshiworld.listener;
 
 import de.joshiworld.main.OT;
+import de.joshiworld.mysql.GetTime;
 import java.io.File;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -36,6 +35,7 @@ public class PlayerJoinListener implements Listener {
             }
             
             cfg.set("Time", 0);
+            GetTime.createPlayer(p.getName());
             
             try {
                 cfg.save(file);
@@ -44,19 +44,32 @@ public class PlayerJoinListener implements Listener {
             }
         }
         
-        if(Bukkit.getOnlinePlayers().size() > 0) {
-            sched = Bukkit.getScheduler().scheduleAsyncRepeatingTask(OT.getInstance(), new Runnable() {
-            @Override
-            public void run() {
-                for(Player player : Bukkit.getOnlinePlayers()) {
-                    long l = OT.timer.get(player.getName());
-                    
-                    OT.timer.put(player.getName(), l++);
-                }
-            }
-        }, 0, 20*1);
-        }
+        scheduler();
         
+    }
+    
+    private void scheduler() {
+        if(Bukkit.getOnlinePlayers().size() <= 1) {
+            if(!Bukkit.getScheduler().isCurrentlyRunning(sched)) {
+            sched = Bukkit.getScheduler().scheduleSyncRepeatingTask(OT.getInstance(), new Runnable() {
+                @Override
+                public void run() {
+                    for(Player player : Bukkit.getOnlinePlayers()) {
+                        if(OT.timer.get(player.getName()) != null) {
+                            int m = OT.timer.get(player.getName());
+                            m++;
+                            OT.timer.put(player.getName(), m);
+                        } else {
+                            OT.timer.put(player.getName(), 0);
+                            int m = OT.timer.get(player.getName());
+                            m++;
+                            OT.timer.put(player.getName(), m);
+                        }
+                    }
+                }
+            }, 0, 20);
+        }
+        }
     }
     
 }
